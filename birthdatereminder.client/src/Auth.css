@@ -1,0 +1,36 @@
+.login {
+    background-color: var(--background-color);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    border-radius: 16px;
+}
+    .login h2  {
+        margin-bottom: 16px;
+    }
+
+    .login .submit-button {
+        margin-top: 16px;
+    }
+
+    .login span {
+        font-size: 15px;
+        margin-top: 16px;
+        text-align: right;
+    }
+
+    .login .error-message {
+        color: rgb(230, 102, 102);
+    }
+
+.field {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 16px;
+}
+
+.validation-message {
+    color: rgb(230, 102, 102);
+    font-size: 13px;
+}
