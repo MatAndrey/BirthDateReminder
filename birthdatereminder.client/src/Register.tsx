@@ -15,18 +15,20 @@ function Register() {
         event.preventDefault();
         startTransition(async () => {
             setErrors([]);
-            const resp = await AuthService.register(email, password, confirmPassword);
-            if (resp.errors) {
-                if (Array.isArray(resp.errors))
-                    setErrors(resp.errors)
-                else {
-                    for (let key in resp.errors) {
-                        setErrors(prev => [...prev, resp.errors[key]])
-                    }
-                }
-            } else {
+            const [resp, data] = await AuthService.register(email, password, confirmPassword);
+            if (resp.ok) {
                 navigate("/birthdays")
                 navigate(0)
+                return
+            }
+            if (data.errors) {
+                if (Array.isArray(data.errors))
+                    setErrors(data.errors)
+                else {
+                    for (let key in data.errors) {
+                        setErrors(prev => [...prev, data.errors[key]])
+                    }
+                }
             }
         });
     }

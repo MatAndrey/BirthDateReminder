@@ -91,6 +91,7 @@ function Settings() {
         event.preventDefault()
         if (!confirm("Выйти из аккаунта?")) return;
         AuthService.logout();
+        window.location.reload();
     }
 
     const testEmail = async (event: React.FormEvent) => {

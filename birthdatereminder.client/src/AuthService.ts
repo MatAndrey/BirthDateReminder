@@ -1,36 +1,28 @@
 class AuthService {
-    login(email: string, password: string) {
-        return fetch("/api/auth/login", {
+    async login(email: string, password: string) {
+        const res = await fetch("/api/auth/login", {
             method: "POST",
             body: JSON.stringify({ email, password }),
             headers: {
                 "Content-Type": "application/json"
             }
         })
-            .then(res => res.json())
-            .then(data => {
-                if (data.token) {
-                    localStorage.setItem("userToken", data.token)
-                }
-                return data
-            })
+        const data = await res.json();
+        localStorage.setItem("userToken", data.token)
+        return res;
     }
 
-    register(email: string, password: string, confirmPassword: string) {
-        return fetch("/api/auth/register", {
+    async register(email: string, password: string, confirmPassword: string) {
+        const res = await fetch("/api/auth/register", {
             method: "POST",
             body: JSON.stringify({ email, password, confirmPassword }),
             headers: {
                 "Content-Type": "application/json"
             }
         })
-            .then(res => res.json())
-            .then(data => {
-                if (data.token) {
-                    localStorage.setItem("userToken", data.token)
-                }
-                return data
-            })
+        const data = await res.json();
+        localStorage.setItem("userToken", data.token)
+        return [res, data];
     }
 
     logout() {

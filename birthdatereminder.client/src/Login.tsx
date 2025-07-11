@@ -17,14 +17,8 @@ function Login() {
         startTransition(async () => {
             setErrors([]);
             const resp = await AuthService.login(email, password);
-            if (resp.errors) {
-                if (Array.isArray(resp.errors))
-                    setErrors(resp.errors)
-                else {
-                    for (let key in resp.errors) {
-                        setErrors(prev => [...prev, resp.errors[key]])
-                    }
-                }
+            if (!resp.ok) {
+                alert("Неверный пароль или email")
             } else {
                 navigate("/birthdays")
                 navigate(0)
