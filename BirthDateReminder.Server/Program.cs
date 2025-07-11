@@ -14,7 +14,7 @@ builder.Configuration.AddEnvironmentVariables();
 
 builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
 builder.Services.AddScoped<ImageService>();
-//builder.Services.AddHostedService<ReminderService>();
+builder.Services.AddHostedService<ReminderService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 
 builder.Services.AddControllers();
