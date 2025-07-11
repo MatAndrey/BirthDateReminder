@@ -47,14 +47,14 @@
 
 ## ⚙️ Установка и запуск
 
-### 1. Клонируй репозиторий
+### 1. Клонировать репозиторий
 
 ```bash
 git clone https://github.com/MatAndrey/BirthDateReminder.git
 cd BirthDateReminder
 ```
 
-### 2. Создай `.env` файл
+### 2. Создать `.env` файл
 
 Создай файл `.env` на основе `.env.example`:
 
