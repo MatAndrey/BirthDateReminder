@@ -7,5 +7,6 @@
         public string Name { get; set; }
         public DateOnly BirthDate { get; set; }
         public string? ImagePath { get; set; }
+        public List<Reminder> Reminders { get; set; }
     }
 }

@@ -61,7 +61,7 @@ function Register() {
                 onChange={(e) => setConfirmPassword(e.target.value)} />
             {errors && errors.map((el, i) => <p className="error-message" key={i}>{el}</p>)}
             <button className="button primary" disabled={pending}>
-                Войти
+                Зарегистрироваться
             </button>
             <span>
                 Уже есть аккаунт? <Link to='/login'>Войти</Link>

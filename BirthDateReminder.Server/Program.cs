@@ -14,6 +14,9 @@ builder.Configuration.AddEnvironmentVariables();
 
 builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
 builder.Services.AddScoped<ImageService>();
+builder.Services.AddScoped<BirthdayService>();
+builder.Services.AddScoped<SettingsService>();
+builder.Services.AddScoped<AuthService>();
 builder.Services.AddHostedService<ReminderService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 
@@ -31,6 +34,8 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 .AddEntityFrameworkStores<AppDbContext>()
 .AddDefaultTokenProviders();
 
+var jwtKey = builder.Configuration["Jwt:Key"] ?? throw new InvalidOperationException("Ключ для JWT токенов не задан в .env");
+
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     options.TokenValidationParameters = new TokenValidationParameters
@@ -40,8 +45,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         ValidateAudience = true,
         ValidAudience = builder.Configuration["Jwt:Audience"],
         ValidateLifetime = true,
-        IssuerSigningKey = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"])),
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
         ValidateIssuerSigningKey = true,
         ClockSkew = TimeSpan.Zero
     });
@@ -53,18 +57,6 @@ builder.Services.AddAuthorization(options =>
         .RequireAuthenticatedUser()
         .Build();
 });
-
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("AllowSpa", policy =>
-    {
-        policy.WithOrigins("https://localhost:49482")
-              .AllowAnyHeader()
-              .AllowAnyMethod()
-              .AllowCredentials();
-    });
-});
-
 
 var app = builder.Build();
 

@@ -1,12 +1,7 @@
-﻿using BirthDateReminder.Server.Data;
-using BirthDateReminder.Server.Dtos;
+﻿using BirthDateReminder.Server.Dtos;
+using BirthDateReminder.Server.Services;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.IdentityModel.Tokens;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Text;
 
 namespace BirthDateReminder.Server.Controllers
 {
@@ -14,13 +9,11 @@ namespace BirthDateReminder.Server.Controllers
     [Route("api/[controller]")]
     public class AuthController : ControllerBase
     {
-        private readonly IConfiguration _config;
-        private readonly UserManager<ApplicationUser> _userManager;
+        private readonly AuthService _authService;
 
-        public AuthController(IConfiguration config, UserManager<ApplicationUser> userManager)
+        public AuthController(AuthService authService)
         {
-            _config = config;
-            _userManager = userManager;
+            _authService = authService;
         }
 
         [HttpPost("login")]
@@ -29,15 +22,15 @@ namespace BirthDateReminder.Server.Controllers
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
-            var user = await _userManager.FindByEmailAsync(formData.Email);
-            if (user == null) return Unauthorized();
-
-            var isValid = await _userManager.CheckPasswordAsync(user, formData.Password);
-            if (!isValid) return Unauthorized();
-
-            var token = GenerateJwtToken(user);
-
-            return Ok(new { Token = token });
+            try
+            {
+                string token = await _authService.LoginAsync(formData);
+                return Ok(new { Token = token });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(401, ex);
+            }
         }
 
         [HttpPost("register")]
@@ -47,49 +40,17 @@ namespace BirthDateReminder.Server.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            var userExists = await _userManager.FindByEmailAsync(formData.Email);
-            if (userExists != null)
-                return BadRequest("{\"errors\": [\"User already exists\"]}");
-
-            var user = new ApplicationUser
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+            try
             {
-                Email = formData.Email,
-                UserName = formData.Email
-            };
-
-            var result = await _userManager.CreateAsync(user, formData.Password);
-
-            if (!result.Succeeded)
-            {
-                var errors = result.Errors.Select(e => e.Description);
-                return BadRequest(new { Errors = errors });
+                string token = await _authService.RegisterAsync(formData);
+                return Ok(new { Token = token });
             }
-
-            var token = GenerateJwtToken(user);
-
-            return Ok(new { Token = token });
-        }
-
-        private string GenerateJwtToken(ApplicationUser user)
-        {
-            var claims = new[]
+            catch (Exception ex)
             {
-                new Claim(JwtRegisteredClaimNames.Sub, user.Id),
-                new Claim(JwtRegisteredClaimNames.Email, user.Email),
-                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
-            };
-
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]));
-            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-
-            var token = new JwtSecurityToken(
-                issuer: _config["Jwt:Issuer"],
-                audience: _config["Jwt:Audience"],
-                claims: claims,
-                expires: DateTime.UtcNow.AddHours(_config.GetValue<double>("Jwt:ExpireHours")),
-                signingCredentials: creds);
-
-            return new JwtSecurityTokenHandler().WriteToken(token);
-        }
+                return StatusCode(400, ex);
+            }
+        }   
     }
 }

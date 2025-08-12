@@ -1,9 +1,7 @@
-﻿using BirthDateReminder.Server.Data;
-using BirthDateReminder.Server.Dtos;
+﻿using BirthDateReminder.Server.Dtos;
 using BirthDateReminder.Server.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
 
@@ -14,47 +12,24 @@ namespace BirthDateReminder.Server.Controllers
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public class SettingsController : ControllerBase
     {
-        private readonly AppDbContext _context;
-        private readonly UserManager<ApplicationUser> _userManager;
-        private readonly IEmailService _emailService;
-        public SettingsController(AppDbContext context, UserManager<ApplicationUser> userManager, IEmailService emailService)
+        private readonly SettingsService _settingsService;
+        public SettingsController(SettingsService settingsService)
         {
-            _context = context;
-            _userManager = userManager;
-            _emailService = emailService;
+            _settingsService = settingsService;
         }
 
         [HttpGet]
         public async Task<IActionResult> GetUserSettings()
         {
-            var user = await _userManager.GetUserAsync(User);
-
-            if(user == null)
+            try
             {
-                return NotFound();
+                var settings = await _settingsService.GetUserSettingsAsync(User);
+                return Ok(settings);
             }
-
-            return Ok(new {user.Email, user.NotifyInBD, user.NotifyDayBefore});
-        }
-
-        [HttpPut("notifications")]
-        public async Task<IActionResult> UpdateNotifications([FromBody] NotificationsDto dto)
-        {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
-            var user = await _userManager.GetUserAsync(User);
-
-            if (user == null)
+            catch (Exception ex)
             {
-                return NotFound();
+                return StatusCode(500, ex);
             }
-
-            user.NotifyDayBefore = dto.NotifyDayBefore;
-            user.NotifyInBD = dto.NotifyInBD;
-
-            await _context.SaveChangesAsync();
-            
-            return NoContent();
         }
 
         [HttpPut("change-password")]
@@ -62,19 +37,14 @@ namespace BirthDateReminder.Server.Controllers
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
-            var user = await _userManager.GetUserAsync(User);
-
-            if (user == null)
+            try
             {
-                return NotFound();
-            }
-
-            var result = await _userManager.ChangePasswordAsync(user, dto.OldPassword, dto.NewPassword);
-
-            if (!result.Succeeded)
-                return BadRequest();
-
-            return Ok();
+                await _settingsService.ChangePasswordAsync(User, dto);
+                return Ok();
+            } catch (Exception ex)
+            {
+                return StatusCode(500, ex);
+            }            
         }
 
         [HttpPut("change-email")]
@@ -84,20 +54,15 @@ namespace BirthDateReminder.Server.Controllers
             {
                 return BadRequest(ModelState);
             }
-                
-            var user = await _userManager.GetUserAsync(User);
-
-            if (user == null)
+            try
             {
-                return NotFound();
+                await _settingsService.ChangeEmailAsync(User, dto);
+                return Ok();
             }
-
-            var result = await _userManager.SetEmailAsync(user, dto.NewEmail);
-
-            if (!result.Succeeded)
-                return BadRequest(result.Errors);
-
-            return Ok();
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex);
+            }
         }
 
         [HttpPost("test-email")]
@@ -108,16 +73,33 @@ namespace BirthDateReminder.Server.Controllers
                 return BadRequest(ModelState);
             }
 
-            var user = await _userManager.GetUserAsync(User);
-
-            if (user == null)
+            try
             {
-                return NotFound();
+                await _settingsService.SendTestEmailAsync(User);
+                return Ok();
             }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex);
+            }
+        }
 
-            await _emailService.SendEmailAsync(user.Email, "Тестовое письмо", "Так будет выглядеть напоминание о дне рождения");
-
-            return Ok();
+        [HttpDelete]
+        public async Task<IActionResult> DeleteUser()
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+            try
+            {
+                await _settingsService.DeleteAccountAsync(User);
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex);
+            }
         }
     }
 }

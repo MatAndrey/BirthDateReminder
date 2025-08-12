@@ -2,9 +2,10 @@
 
 namespace BirthDateReminder.Server.Data
 {
+    #nullable disable
     public class ApplicationUser : IdentityUser
     {
-        public bool NotifyInBD { get; set; }
-        public bool NotifyDayBefore { get; set; }
+        public override string Email { get; set; } = default!;
     }
+    #nullable restore
 }

@@ -3,6 +3,13 @@ import Popup from "./Popup";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import AuthService from "./AuthService";
+import { reminderToString } from "./utils";
+
+interface IReminder {
+    id: number
+    unitsCount: number
+    unitsType: number
+}
 
 function BirthdayEdit() {
     const { id } = useParams<{ id: string | undefined }>();
@@ -10,7 +17,10 @@ function BirthdayEdit() {
     const [date, setDate] = useState(new Date().toJSON().slice(0, 10));
     const [name, setName] = useState("");
     const [imageFile, setImageFile] = useState<File | null>(null);
-    const [imagePath, setImagePath] = useState("")
+    const [imagePath, setImagePath] = useState("");
+    const [newReminderNum, setNewReminderNum] = useState(1);
+    const [newReminderUnit, setNewReminderUnit] = useState("День");
+    const [reminders, setReminders] = useState<IReminder[]>([]);
 
     const loadBirthdays: Function = useOutletContext();
 
@@ -22,6 +32,7 @@ function BirthdayEdit() {
                 setDate(data.birthDate)
                 setName(data.name)
                 setImagePath(data.imagePath)
+                setReminders(data.reminders)
             } catch (err) {
                 console.error(err);
             }
@@ -31,6 +42,30 @@ function BirthdayEdit() {
             fetchBirthday();
         }            
     }, [id]);
+
+    const handleCreateReminder = async (e: React.FormEvent) => {
+        e.preventDefault();
+
+        const resp = await AuthService.fetchWithAuth(`/api/birthday/reminder`,
+            {
+                method: "POST",
+                body: JSON.stringify({
+                    birthdayId: id,
+                    reminderUnit: newReminderUnit,
+                    reminderNum: newReminderNum
+                }),
+                headers: {
+                    "Content-Type": "application/json"
+                }
+            })
+        if (resp.ok) {
+            const data = await resp.json();
+            setReminders(data)
+        } else {
+            alert("Ошибка при добвлении напоминания")
+            console.log(await resp.json())
+        }
+    }
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -92,6 +127,21 @@ function BirthdayEdit() {
         navigate('/birthdays');
     };
 
+    const deleteReminder = async (id: number) => {
+        if (id) {
+            const resp = await AuthService.fetchWithAuth(`/api/birthday/reminder/${id}`, {
+                method: "DELETE"
+            })
+            if (resp.ok) {
+                const data = await resp.json();
+                setReminders(data)
+            } else {
+                alert("Ошибка при удалении напоминания")
+                console.log(await resp.json())
+            }
+        }
+    }
+
     return <Popup>
         <h2>{ id === undefined ? "Создание" : "Редактирование" }</h2>
         <form onSubmit={handleSubmit} className="birthday-edit-form">
@@ -124,6 +174,29 @@ function BirthdayEdit() {
                     <img src={imagePath} alt="Preview" />
                 </div>
             )}
+
+            {id !== undefined &&
+                <>
+                <h3>Напоминания</h3>
+                <ul className="reminders">
+                    {reminders.map(r =>
+                        <li>
+                            За {r.unitsCount} {reminderToString(r.unitsCount, r.unitsType)} <button type="button" className="button" onClick={() => deleteReminder(r.id)}>Удалить</button>
+                        </li>)}
+                </ul>
+                <div className="reminders-settings">
+                    За
+                    <input type="number" min="1" max="31" value={newReminderNum} onChange={e => setNewReminderNum(+e.target.value)} />
+                    <select value={newReminderUnit} onChange={e => setNewReminderUnit(e.target.value)}>
+                        <option>День</option>
+                        <option>Неделя</option>
+                        <option>Месяц</option>
+                    </select>
+                    <button type="button" className="button" onClick={handleCreateReminder}>
+                        Добавить
+                    </button>
+                </div>
+                </>}
 
             <div className="form-actions">
                 <button type="button" className="button" onClick={handleClose}>

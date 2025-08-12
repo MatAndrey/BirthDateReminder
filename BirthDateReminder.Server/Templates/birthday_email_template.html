@@ -1,0 +1,71 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background-color: #ff6b6b;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            border-radius: 8px 8px 0 0;
+        }
+
+        .content {
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 0 0 8px 8px;
+        }
+
+        .days-count {
+            font-size: 24px;
+            color: #ff6b6b;
+            font-weight: bold;
+        }
+
+        .footer {
+            margin-top: 20px;
+            font-size: 12px;
+            color: #6c757d;
+            text-align: center;
+        }
+
+        .button {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #ff6b6b;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Напоминание о Дне Рождения!</h1>
+    </div>
+    <div class="content">
+        <p>Привет!</p>
+        <p>Хотим напомнить, что у <strong>{{Имя}}</strong> скоро День Рождения!</p>
+        <p>
+            До этого радостного события осталось всего:
+            <span class="days-count">{{Количество}} {{Дней/Недель/Месяцев}}</span>!
+        </p>
+        <p>Не забудьте подготовить поздравление и подарок 🎁</p>
+        <a href="{{Ссылка}}" class="button">Добавить в календарь</a>
+    </div>
+    <div class="footer">
+        <p>Это письмо отправлено автоматически. Пожалуйста, не отвечайте на него.</p>
+        <p>© 2025 Поздравлятор</p>
+    </div>
+</body>
+</html>

@@ -3,6 +3,7 @@ using System;
 using BirthDateReminder.Server.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace BirthDateReminder.Server.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250811130220_AddReminderTable")]
+    partial class AddReminderTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "9.0.8");
@@ -39,7 +42,7 @@ namespace BirthDateReminder.Server.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("BirthdayItems", (string)null);
+                    b.ToTable("BirthdayItems");
                 });
 
             modelBuilder.Entity("BirthDateReminder.Server.Models.Reminder", b =>
@@ -61,7 +64,7 @@ namespace BirthDateReminder.Server.Migrations
 
                     b.HasIndex("BirthdayId");
 
-                    b.ToTable("Reminders", (string)null);
+                    b.ToTable("Reminders");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>

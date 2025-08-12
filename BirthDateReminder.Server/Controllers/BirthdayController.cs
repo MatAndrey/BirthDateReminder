@@ -1,12 +1,10 @@
 ﻿using BirthDateReminder.Server.Data;
 using BirthDateReminder.Server.Dtos;
-using BirthDateReminder.Server.Models;
 using BirthDateReminder.Server.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace BirthDateReminder.Server.Controllers
 {
@@ -15,39 +13,37 @@ namespace BirthDateReminder.Server.Controllers
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public class BirthdayController : ControllerBase
     {
-        private readonly AppDbContext _context;
-        private readonly ImageService _imageService;
-        private readonly UserManager<ApplicationUser> _userManager;
+        private readonly BirthdayService _birthdayService;
 
-        public BirthdayController(AppDbContext context, ImageService imageService, UserManager<ApplicationUser> userManager)
+        public BirthdayController(BirthdayService birthdayService)
         {
-            _context = context;
-            _imageService = imageService;
-            _userManager = userManager;
+            _birthdayService = birthdayService;
         }
 
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
-            var user = await _userManager.GetUserAsync(User);
-
-            if (user == null)
+            try
             {
-                return NotFound();
+                return Ok(await _birthdayService.GetUserBirthdaysAsync(User));
             }
-            return Ok(await _context.BirthdayItems.Where(el => el.OwnerId == user.Id).ToListAsync());
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex);
+            }
         }
 
         [HttpGet("{id}")]
         public async Task<IActionResult> Get(int id)
         {
-            var user = await _userManager.GetUserAsync(User);
-
-            if (user == null)
+            try
             {
-                return NotFound();
+                return Ok(await _birthdayService.GetBirthdayAsync(id));
             }
-            return Ok(await _context.BirthdayItems.FirstOrDefaultAsync(el => el.OwnerId == user.Id && el.Id == id));
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex);
+            }
         }
 
         [HttpPost]
@@ -55,31 +51,15 @@ namespace BirthDateReminder.Server.Controllers
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
-            var user = await _userManager.GetUserAsync(User);
-
-            if (user == null)
+            try
             {
-                return NotFound();
+                var birthday = await _birthdayService.CreateBirthdayAsync(formData, User);
+                return CreatedAtAction(nameof(Get), new { id = birthday.Id }, birthday);
             }
-            string imageUrl = null;
-            if (formData.Image != null && formData.Image.Length > 0)
+            catch (Exception ex)
             {
-                try
-                {
-                    imageUrl = await _imageService.SaveImage(formData.Image);
-                }
-                catch (Exception ex)
-                {
-                    return StatusCode(500, $"Image upload failed: {ex.Message}");
-                }
+                return StatusCode(500, ex.Message);
             }
-
-            var birthday = new BirthdayItem { BirthDate = formData.BirthDate, Name = formData.Name, ImagePath = imageUrl, OwnerId = user.Id };
-
-            _context.BirthdayItems.Add(birthday);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction(nameof(Get), new { id = birthday.Id }, birthday);
         }
 
         [HttpPut("{id}")]
@@ -87,39 +67,15 @@ namespace BirthDateReminder.Server.Controllers
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
-            var birthday = await _context.BirthdayItems.FindAsync(id);
-            if (birthday == null)
+            
+            try
             {
-                return NotFound();
-            }
-
-            var user = await _userManager.GetUserAsync(User);
-
-            string imageUrl = null;
-            if (formData.Image != null && formData.Image.Length > 0)
+                await _birthdayService.UpdateBirthdayAsync(formData, id);
+                return NoContent();
+            } catch (Exception ex)
             {
-                try
-                {
-                    imageUrl = await _imageService.SaveImage(formData.Image);
-                    if(birthday.ImagePath != null)
-                        _imageService.DeleteImage(birthday.ImagePath);
-                }
-                catch (Exception ex)
-                {
-                    return StatusCode(500, $"Image upload failed: {ex.Message}");
-                }
+                return StatusCode(500, ex.Message);
             }
-
-            birthday.BirthDate = formData.BirthDate;
-            birthday.Name = formData.Name;
-            if(imageUrl != null)
-            {
-                birthday.ImagePath = imageUrl;
-            }
-
-            await _context.SaveChangesAsync();
-
-            return NoContent();
         }
 
         [HttpDelete("{id}")]
@@ -127,27 +83,42 @@ namespace BirthDateReminder.Server.Controllers
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
-            var birthday = await _context.BirthdayItems.FindAsync(id);
-            if (birthday == null) return NotFound();
-
-            var user = await _userManager.GetUserAsync(User);
-
-            if (user == null)
+            try
             {
-                return NotFound();
+                await _birthdayService.DeleteBirthdayAsync(id);
+                return NoContent();
             }
-
-            if (birthday.OwnerId != user.Id)
+            catch (Exception ex)
             {
-                return Forbid();
+                return StatusCode(500, ex.Message);
             }
+        }
 
-            if (birthday.ImagePath != null)
-                _imageService.DeleteImage(birthday.ImagePath);
-            _context.BirthdayItems.Remove(birthday);
-            await _context.SaveChangesAsync();
+        [HttpPost("reminder")]
+        public async Task<IActionResult> CreateReminder([FromBody] ReminderDto dto)
+        {
+            try
+            {
+                var reminders = await _birthdayService.CreateReminderAsync(dto);
+                return Ok(reminders);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
+        }
 
-            return NoContent();
+        [HttpDelete("reminder/{id}")]
+        public async Task<IActionResult> CreateReminder(int id)
+        {
+            try
+            {
+                return Ok(await _birthdayService.DeleteReminderAsync(id));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
         }
     }
 }

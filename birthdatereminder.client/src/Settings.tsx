@@ -6,8 +6,6 @@ function Settings() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [newPassword, setNewPassword] = useState("");
-    const [notifyInBD, setNotifyInBD] = useState(false)
-    const [notifyDayBefore, setNotifyDayBefore] = useState(false)
 
     useEffect(() => {
         const fetchSettings = async () => {
@@ -16,8 +14,6 @@ function Settings() {
                 const data = await response.json();
                 if (response.ok) {
                     setEmail(data.email)
-                    setNotifyDayBefore(data.notifyDayBefore)
-                    setNotifyInBD(data.notifyInBD)
                 }
             } catch (err) {
                 console.error(err);
@@ -26,24 +22,6 @@ function Settings() {
 
         fetchSettings();
     }, [])
-
-    const saveNotifications = async (event: React.FormEvent) => {
-        event.preventDefault();
-        const resp  = await AuthService.fetchWithAuth(`/api/settings/notifications`,
-            {
-                method: "PUT",
-                body: JSON.stringify({ notifyDayBefore, notifyInBD }),
-                headers: {
-                    "Content-Type": "application/json"
-                }
-            })
-        if (resp.ok) {
-            alert("Настройки успешно сохранены")
-        } else {
-            alert("Ошибка при сохранении настроек")
-            console.log(await resp.json())
-        }
-    }
 
     const changePassword = async (event: React.FormEvent) => {
         event.preventDefault();
@@ -59,6 +37,8 @@ function Settings() {
                 }
             })
         if (resp.ok) {
+            setPassword("");
+            setNewPassword("");
             alert("Пароль успешно изменён")
         } else {
             alert("Ошибка при изменении пароля")
@@ -92,6 +72,25 @@ function Settings() {
         if (!confirm("Выйти из аккаунта?")) return;
         AuthService.logout();
         window.location.reload();
+    }
+
+    const deleteAccount = async (event: React.FormEvent) => {
+        event.preventDefault();
+        const answer = prompt("Вы действительно хотите безвозвратно удалить свой аккаунт? Введите \"Удалить\" для подтверждения");
+        if (answer == "Удалить") {
+            const resp = await AuthService.fetchWithAuth(`/api/settings`,
+                {
+                    method: "DELETE"
+                })
+            if (resp.ok) {
+                alert("Аккаунт успешно удалён")
+                AuthService.logout();
+                window.location.reload();
+            } else {
+                alert("Ошибка при удалении аккаунта")
+                console.log(await resp.json())
+            }
+        }
     }
 
     const testEmail = async (event: React.FormEvent) => {
@@ -144,27 +143,11 @@ function Settings() {
             <button className="primary button" onClick={ changePassword }>Изменить пароль</button>
         </form>
         <form>
-            <div>
-                <input
-                    id="notify"
-                    type="checkbox"
-                    checked={notifyInBD}
-                    onChange={ () => setNotifyInBD(!notifyInBD) }
-                />
-                <label htmlFor="notify">Оповещать в день ДР</label>
-            </div>
-            <div>
-                <input
-                    id="notifyDayBefore"
-                    type="checkbox"
-                    checked={notifyDayBefore}
-                    onChange={() => setNotifyDayBefore(!notifyDayBefore)}
-                />
-                <label htmlFor="notifyDayBefore">Оповещать за день до ДР</label>
-            </div>
-            <button className="primary button" onClick={saveNotifications}>Сохранить настройки</button>
-            <button className=" button" onClick={logout}>Выйти из аккаунта</button>
+            <button className="button" onClick={logout}>Выйти из аккаунта</button>
         </form>
+        <form>
+            <button className="button" onClick={deleteAccount}>Удалить аккаунт</button>
+        </form> 
     </Popup>
 }
 

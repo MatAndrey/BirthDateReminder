@@ -39,7 +39,8 @@
         color: #333;
     }
 
-    .popup form input {
+    .popup form input,
+    .popup form select {
         padding: 8px 12px;
         border: 1px solid #ddd;
         border-radius: 4px;
@@ -79,3 +80,24 @@
 .popup-error {
     color: #d32f2f;
 }
+
+.reminders {
+    margin-left: 16px;
+}
+
+    .reminders li button {
+        visibility: hidden;
+    }
+
+    .reminders li:hover button {
+        visibility: visible;
+    }
+
+.reminders-settings {
+    display: flex;
+    align-items: center;
+    justify-content: space-between
+}
+    .reminders-settings input {
+        max-width: 50px;
+    }
